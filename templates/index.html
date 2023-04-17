@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bucket List</title>
+    <meta property="og:title" content="Bucket List">
+    <meta property="og:description" content="Create and manage your bucket list with this simple web app.">
+    <meta property="og:image" content="https://example.com/bucket_list.jpg">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 offset-md-3">
+          <h1 class="text-center mt-5 mb-3">Bucket List</h1>
+          <form id="bucket-form">
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" class="form-control" id="name" name="name">
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+          </form>
+          <ul id="bucket-list" class="list-group mt-3">
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function() {
+        // Retrieve all bucket list items from MongoDB and add them to the list
+        $.ajax({
+          type: "GET",
+          url: "/get_buckets",
+          success: function(data) {
+            $.each(data, function(idx, bucket) {
+              var li = '<li class="list-group-item" data-num="' + bucket.num + '">';
+              li += '<strong>' + bucket.name + '</strong>: ' + bucket.description;
+              li += '<button class="btn btn-danger btn-sm delete-btn float-right">Delete</button>';
+              li += '</li>';
+              $("#bucket-list").append(li);
+            });
+          }
+        });
+
+        // Add a new item to the list when the form is submitted
+        $("#bucket-form").submit(function(e) {
+          e.preventDefault();
+          var name = $("#name").val();
+          var description = $("#description").val();
+          if (name && description) {
+            $.ajax({
+              type: "POST",
+              url: "/add_bucket",
+              data: {"name": name, "description": description},
+              success: function() {
+                window.location.reload();
+              }
+            });
+          }
+        });
+
+        // Delete an item from the list when the "Delete" button is clicked
+        $(document).on("click", ".delete-btn", function() {
+          var num = $(this).parents("li").attr("data-num");
+          $.ajax({
+            type: "POST",
+            url: "/delete",
+            data: {"num": num},
+            success: function() {
+              window.location.reload();
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
+
